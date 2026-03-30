@@ -1,0 +1,102 @@
+---
+title: My dynamic report
+output: html_fragment
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE, error=FALSE)
+
+```
+
+```{css}
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+body {
+  font-family: "Nunito", sans-serif;
+  font-size: 20px;
+}
+h2,h3 {
+  text-decoration: underline;
+}
+```
+
+## **Fuel prices across different stations in Auckland**
+
+The purpose of this report is to get an understanding of how fuel prices compare across different fuel stations in Auckland.
+
+```{r}
+library(tidyverse)
+logged_data <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTElqKsgASNluXUaano0vLYorvYaBtoDSF2gCqncpWcQAzg2BnE7kft1m-gm_eIMdFa0fGTrocxx_Ou/pub?gid=93307876&single=true&output=csv") %>% rename(date = 2,
+                                                                                                                                                                                                              time = 3,
+                                                                                                                                                                                                              unleaded_91 = 4,
+                                                                                                                                                                                                              premium_95 = 5,
+                                                                                                                                                                                                              premium_98 = 6,
+                                                                                                                                                                                                              brand = 7,
+                                                                                                                                                                                                              location = 8)
+
+minimum_91 <- logged_data$unleaded_91 %>% min(na.rm = TRUE)
+minimum_95 <- logged_data$premium_95 %>% min(na.rm = TRUE)
+minimum_98 <- logged_data$premium_98 %>% min(na.rm = TRUE)
+
+maximum_91 <- logged_data$unleaded_91 %>% max(na.rm = TRUE)
+maximum_95 <- logged_data$premium_95 %>% max(na.rm = TRUE)
+maximum_98 <- logged_data$premium_98 %>% max(na.rm = TRUE)
+
+mean_91 <- logged_data$unleaded_91 %>% mean(na.rm = TRUE) %>% round(digits = 2)
+mean_95 <- logged_data$premium_95 %>% mean(na.rm = TRUE) %>% round(digits = 2)
+mean_98 <- logged_data$premium_98 %>% mean(na.rm = TRUE) %>% round(digits = 2)
+
+price_means <- data.frame(Grade = c("Unleaded 91","Premium 95","Premium 98"),
+                          Means = c(mean_91,mean_95,mean_98)
+                          )
+
+common_brand <- logged_data %>% count(brand)
+sorted_brands <- common_brand[order(common_brand$n, decreasing = TRUE),]
+
+unleaded91_chart <- logged_data %>% ggplot() + geom_bar(aes(x= unleaded_91), fill = "#054aed") + labs(title="Unleaded 91",x="Price ($)", y="Count")
+premium95_chart <- logged_data %>% ggplot() + geom_bar(aes(x= premium_95), fill = "#e5ed05") + labs(title="Premium 95",x="Price ($)", y="Count")
+premium98_chart <- logged_data %>% ggplot() + geom_bar(aes(x= premium_98), fill = "#ed0505") + labs(title="Premium 98",x="Price ($)", y="Count")
+brand_chart <- logged_data %>% ggplot() + geom_bar(aes(x = brand), fill="#fc7303") + labs(title="Surveyed Brands",x="Brands", y="Count")
+
+
+highest_mean <- price_means[order(price_means$Means, decreasing = TRUE),]
+lowest_mean <- price_means[order(price_means$Means, decreasing = FALSE),]
+```
+
+The survey form currently holds **`r nrow(logged_data)`** records.
+
+### Unleaded 91
+
+```{r}
+unleaded91_chart
+```
+
+The highest price for Unleaded 91 is around **$`r maximum_91`** dollars per litre and the lowest price is around **$`r minimum_91`** dollars per litre. The mean price is around **$`r mean_91`** dollars per litre.
+
+### Premium 95
+
+```{r}
+premium95_chart
+```
+
+The highest price for Premium 95 is around **$`r maximum_95`** dollars per litre and the lowest price is around **$`r minimum_95`** dollars per litre. The mean price is around **$`r mean_95`** dollars per litre.
+
+### Premium 98
+
+```{r}
+premium98_chart
+```
+
+The highest price for Premium 98 is around **$`r maximum_98`** dollars per litre and the lowest price is around **$`r minimum_98`** dollars per litre. The mean price is around **\$`r mean_98`** dollars per litre.
+
+### Fuel Brands
+
+```{r}
+brand_chart
+```
+
+The most common fuel brand recorded in this survey is **`r sorted_brands$brand[1]`**.
+
+### Summary
+
+Comparing the means of each fuel grade in this survey, we find that **`r highest_mean$Grade[1]`** was the most expensive of all other grades with a mean price of **\$`r highest_mean$Means[1]`**, and **`r lowest_mean$Grade[1]`** was the cheapest of all other grades with a mean price of **\$`r lowest_mean$Means[1]`**.
